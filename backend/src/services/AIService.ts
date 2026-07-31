@@ -78,11 +78,14 @@ export class AIService {
   ): Promise<PokerSuggestion> {
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/` +
-      `${config.ai.model}:generateContent?key=${config.ai.geminiApiKey}`;
+      `${config.ai.model}:generateContent`;
 
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': config.ai.geminiApiKey,
+      },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [
@@ -103,8 +106,9 @@ export class AIService {
         ],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 400,
+          maxOutputTokens: 800,
           responseMimeType: 'application/json',
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
