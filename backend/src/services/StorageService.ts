@@ -11,7 +11,22 @@ export interface StorageUploadInput {
   filename: string;
   sessionId?: string;
   handId?: string;
+  sessionTableId?: string;
   type?: string;
+}
+
+export interface StorageRegisterInput {
+  bucket: string;
+  path: string;
+  filename: string;
+  mimeType?: string;
+  sizeBytes: number;
+  sessionId?: string;
+  handId?: string;
+  sessionTableId?: string;
+  type?: string;
+  status?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -57,9 +72,34 @@ export class StorageService {
       status: 'READY',
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       ...(input.handId ? { handId: input.handId } : {}),
+      ...(input.sessionTableId ? { sessionTableId: input.sessionTableId } : {}),
     });
 
     return this.getPublicUrl(input.bucket, input.path);
+  }
+
+  /**
+   * Registra um upload feito direto no Storage (upload direto do browser),
+   * sem passar os bytes pelo backend.
+   */
+  async register(input: StorageRegisterInput): Promise<void> {
+    if (!this.validBuckets.has(input.bucket)) {
+      throw new BadRequestError(`Bucket inválido: ${input.bucket}`);
+    }
+
+    await this.repository.create({
+      bucket: input.bucket,
+      path: input.path,
+      filename: input.filename,
+      mimeType: input.mimeType,
+      sizeBytes: input.sizeBytes,
+      type: input.type ?? 'VIDEO',
+      status: (input.status ?? 'READY') as 'READY',
+      metadata: input.metadata ?? {},
+      ...(input.sessionId ? { sessionId: input.sessionId } : {}),
+      ...(input.handId ? { handId: input.handId } : {}),
+      ...(input.sessionTableId ? { sessionTableId: input.sessionTableId } : {}),
+    });
   }
 
   async getPublicUrl(bucket: string, path: string): Promise<string> {

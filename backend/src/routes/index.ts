@@ -4,12 +4,14 @@ import { SessionController } from '../controllers/SessionController';
 import { HandController } from '../controllers/HandController';
 import { StorageController } from '../controllers/StorageController';
 import { MiscController } from '../controllers/MiscController';
+import { SessionTableController } from '../controllers/SessionTableController';
 import { config } from '../config';
 
 const sessionController = new SessionController();
 const handController = new HandController();
 const storageController = new StorageController();
 const miscController = new MiscController();
+const sessionTableController = new SessionTableController();
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -41,8 +43,15 @@ router.delete('/hands/:id', handController.remove);
 // --- Storage ---
 router.get('/storage/buckets', storageController.buckets);
 router.post('/storage/upload', upload.single('file'), storageController.upload);
+router.post('/storage/register', storageController.register);
 router.post('/storage/signed-url', storageController.signedUrl);
 router.delete('/storage', storageController.delete);
+
+// --- Session Tables (multi-mesa) ---
+router.get('/sessions/:sessionId/tables', sessionTableController.list);
+router.post('/sessions/:sessionId/tables', sessionTableController.create);
+router.patch('/session-tables/:id', sessionTableController.rename);
+router.delete('/session-tables/:id', sessionTableController.remove);
 
 // --- Settings ---
 router.get('/settings', miscController.getSettings);

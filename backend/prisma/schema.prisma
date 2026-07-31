@@ -53,6 +53,14 @@ enum HandAnalysisStatus {
   FAILED
 }
 
+enum TableStatus {
+  EMPTY
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
 // ---------- TAGS ----------
 
 model Tag {
@@ -117,12 +125,34 @@ model Session {
   uploads         Upload[]
   notes           Note[]
   links           TagLink[]
+  sessionTables   SessionTable[]
 
   @@index([startedAt(sort: Desc)])
   @@index([status])
   @@index([tableId])
   @@index([isLive])
   @@map("sessions")
+}
+
+// ---------- SESSION TABLES (multi-mesa por sessão) ----------
+
+model SessionTable {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId  String      @map("session_id") @db.Uuid
+  name       String      @default("Mesa 1")
+  position   Int         @default(0)
+  status     TableStatus @default(EMPTY)
+  videoCount Int         @default(0) @map("video_count")
+  metadata   Json        @default("{}")
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  uploads    Upload[]
+
+  @@unique([sessionId, position])
+  @@index([sessionId])
+  @@map("session_tables")
 }
 
 // ---------- HANDS ----------
@@ -188,26 +218,29 @@ model Statistics {
 // ---------- UPLOADS ----------
 
 model Upload {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId String?      @map("session_id") @db.Uuid
-  handId    String?      @map("hand_id") @db.Uuid
-  bucket    String
-  path      String
-  filename  String
-  mimeType  String?      @map("mime_type")
-  sizeBytes BigInt       @default(0) @map("size_bytes") @db.BigInt
-  type      UploadType   @default(VIDEO)
-  status    UploadStatus @default(PENDING)
-  metadata  Json         @default("{}")
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId       String?       @map("session_id") @db.Uuid
+  handId          String?       @map("hand_id") @db.Uuid
+  sessionTableId  String?       @map("session_table_id") @db.Uuid
+  bucket          String
+  path            String
+  filename        String
+  mimeType        String?       @map("mime_type")
+  sizeBytes       BigInt        @default(0) @map("size_bytes") @db.BigInt
+  type            UploadType    @default(VIDEO)
+  status          UploadStatus  @default(PENDING)
+  metadata        Json          @default("{}")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  session   Session?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-  hand      Hand?        @relation(fields: [handId], references: [id], onDelete: SetNull)
+  session         Session?      @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  hand            Hand?         @relation(fields: [handId], references: [id], onDelete: SetNull)
+  sessionTable    SessionTable? @relation(fields: [sessionTableId], references: [id], onDelete: SetNull)
 
   @@unique([bucket, path])
   @@index([sessionId])
   @@index([status])
+  @@index([sessionTableId])
   @@map("uploads")
 }
 

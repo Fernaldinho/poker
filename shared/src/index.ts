@@ -99,6 +99,7 @@ export interface Upload {
   id: string;
   sessionId?: string | null;
   handId?: string | null;
+  sessionTableId?: string | null;
   bucket: string;
   path: string;
   filename: string;
@@ -128,6 +129,21 @@ export interface AppSetting {
   description?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export type TableStatus = 'EMPTY' | 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
+
+export interface SessionTable {
+  id: string;
+  sessionId: string;
+  name: string;
+  position: number;
+  status: TableStatus;
+  videoCount: number;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  uploads?: Upload[];
 }
 
 // ---------- Realtime ----------

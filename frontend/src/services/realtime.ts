@@ -9,6 +9,7 @@ const REALTIME_TABLES = [
   'notes',
   'tags',
   'settings',
+  'session_tables',
 ] as const;
 
 export type RealtimeTable = (typeof REALTIME_TABLES)[number];

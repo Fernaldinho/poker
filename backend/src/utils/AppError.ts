@@ -1,5 +1,3 @@
-import { NextFunction, Request, Response } from 'express';
-
 /** Erro de domínio com status HTTP e detalhes opcionais. */
 export class AppError extends Error {
   public readonly statusCode: number;

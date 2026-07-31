@@ -5,6 +5,7 @@ import { realtimeService } from '@/services/realtime';
 import { useEffect } from 'react';
 import DashboardPage from '@/pages/DashboardPage';
 import SessionsPage from '@/pages/SessionsPage';
+import SessionDetailPage from '@/pages/SessionDetailPage';
 import LibraryPage from '@/pages/LibraryPage';
 import StatisticsPage from '@/pages/StatisticsPage';
 import ReplayerPage from '@/pages/ReplayerPage';
@@ -33,6 +34,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="/sessions" element={<SessionsPage />} />
+            <Route path="/sessions/:id" element={<SessionDetailPage />} />
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/replayer" element={<ReplayerPage />} />

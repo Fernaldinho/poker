@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Radio, Timer, Wallet } from 'lucide-react';
 import type { Session } from '@poker/shared';
@@ -11,12 +12,13 @@ function SessionCard({ session }: { session: Session }) {
   const isLive = session.isLive || session.status === 'LIVE';
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="card p-5 transition-colors hover:border-surface-700"
-    >
+    <Link to={`/sessions/${session.id}`}>
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card p-5 transition-colors hover:border-accent/50"
+      >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -60,7 +62,8 @@ function SessionCard({ session }: { session: Session }) {
           </span>
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 }
 

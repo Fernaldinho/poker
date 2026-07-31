@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { HandService } from '../services/HandService';
 import { StorageService } from '../services/StorageService';
-import { BadRequestError } from '../utils/AppError';
 
 /** Controllers de Hands (mãos individuais). */
 export class HandController {

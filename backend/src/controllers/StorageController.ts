@@ -23,10 +23,36 @@ export class StorageController {
       filename: req.file.originalname,
       sessionId: req.body.sessionId,
       handId: req.body.handId,
+      sessionTableId: req.body.sessionTableId,
       type: req.body.type,
     });
 
     res.status(201).json({ success: true, data: { url, bucket, path } });
+  };
+
+  register = async (req: Request, res: Response): Promise<void> => {
+    const { bucket, path, filename, mimeType, sizeBytes } = req.body;
+    if (!bucket || !path || !filename || typeof sizeBytes !== 'number') {
+      throw new BadRequestError(
+        'Parâmetros `bucket`, `path`, `filename` e `sizeBytes` são obrigatórios'
+      );
+    }
+
+    await this.storage.register({
+      bucket,
+      path,
+      filename,
+      mimeType,
+      sizeBytes,
+      sessionId: req.body.sessionId,
+      handId: req.body.handId,
+      sessionTableId: req.body.sessionTableId,
+      type: req.body.type,
+      status: req.body.status,
+      metadata: req.body.metadata,
+    });
+
+    res.status(201).json({ success: true });
   };
 
   signedUrl = async (req: Request, res: Response): Promise<void> => {
