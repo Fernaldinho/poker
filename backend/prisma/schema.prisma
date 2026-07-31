@@ -1,0 +1,266 @@
+// ============================================================
+// Poker Analyzer - Prisma Schema
+// Banco: Supabase PostgreSQL
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------- ENUMs ----------
+
+enum GameType {
+  CASH_GAME
+  TOURNAMENT
+  SIT_AND_GO
+}
+
+enum SessionStatus {
+  LIVE
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum UploadType {
+  VIDEO
+  IMAGE
+  THUMBNAIL
+  REPORT
+  IMPORT_FILE
+  SESSION_DATA
+}
+
+enum UploadStatus {
+  PENDING
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum HandAnalysisStatus {
+  PENDING
+  PROCESSING
+  ANALYZED
+  FAILED
+}
+
+// ---------- TAGS ----------
+
+model Tag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  color     String   @default("#6366F1")
+  type      String   @default("GENERAL")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  links     TagLink[]
+
+  @@map("tags")
+}
+
+// ---------- TABLES ----------
+
+model PokerTable {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String?
+  gameType    GameType      @default(CASH_GAME) @map("game_type")
+  stakes      String?
+  maxPlayers  Int           @default(6) @map("max_players")
+  site        String?
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sessions    Session[]
+  statistics  Statistics[]
+  links       TagLink[]
+
+  @@index([isActive])
+  @@map("tables")
+}
+
+// ---------- SESSIONS ----------
+
+model Session {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tableId         String?         @map("table_id") @db.Uuid
+  title           String
+  description     String?
+  status          SessionStatus   @default(LIVE)
+  isLive          Boolean         @default(false) @map("is_live")
+  startedAt       DateTime        @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt         DateTime?       @map("ended_at") @db.Timestamptz(6)
+  buyIn           Decimal         @default(0) @map("buy_in") @db.Decimal(12, 2)
+  cashOut         Decimal         @default(0) @map("cash_out") @db.Decimal(12, 2)
+  profitLoss      Decimal         @default(0) @map("profit_loss") @db.Decimal(12, 2)
+  handsPlayed     Int             @default(0) @map("hands_played")
+  durationMinutes Int             @default(0) @map("duration_minutes")
+  stakes          String?
+  location        String?
+  notesSummary    String?         @map("notes_summary")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  table           PokerTable?     @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  hands           Hand[]
+  statistics      Statistics[]
+  uploads         Upload[]
+  notes           Note[]
+  links           TagLink[]
+
+  @@index([startedAt(sort: Desc)])
+  @@index([status])
+  @@index([tableId])
+  @@index([isLive])
+  @@map("sessions")
+}
+
+// ---------- HANDS ----------
+
+model Hand {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId         String             @map("session_id") @db.Uuid
+  handNumber        Int                @map("hand_number")
+  handIdOriginal    String?            @map("hand_id_original")
+  timestamp         DateTime           @default(now()) @db.Timestamptz(6)
+  players           Int                @default(0)
+  positions         Json               @default("[]")
+  cards             Json               @default("[]")
+  board             Json               @default("[]")
+  pot               Decimal            @default(0) @db.Decimal(12, 2)
+  winner            String?
+  actions           Json               @default("[]")
+  bettingSequence   Json               @default("[]") @map("betting_sequence")
+  analysisStatus    HandAnalysisStatus @default(PENDING) @map("analysis_status")
+  analysisData      Json?              @map("analysis_data")
+  handHistoryRaw    String?            @map("hand_history_raw")
+  notes             String?
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session           Session            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  statistics        Statistics[]
+  uploads           Upload[]
+  noteRefs          Note[]
+  links             TagLink[]
+
+  @@unique([sessionId, handNumber])
+  @@index([timestamp])
+  @@index([analysisStatus])
+  @@map("hands")
+}
+
+// ---------- STATISTICS ----------
+
+model Statistics {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId   String?     @map("session_id") @db.Uuid
+  handId      String?     @map("hand_id") @db.Uuid
+  tableId     String?     @map("table_id") @db.Uuid
+  type        String      @default("GENERAL")
+  data        Json        @default("{}")
+  periodStart DateTime?   @map("period_start") @db.Timestamptz(6)
+  periodEnd   DateTime?   @map("period_end") @db.Timestamptz(6)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session     Session?    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hand        Hand?       @relation(fields: [handId], references: [id], onDelete: Cascade)
+  table       PokerTable? @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([handId])
+  @@index([tableId])
+  @@index([type])
+  @@map("statistics")
+}
+
+// ---------- UPLOADS ----------
+
+model Upload {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String?      @map("session_id") @db.Uuid
+  handId    String?      @map("hand_id") @db.Uuid
+  bucket    String
+  path      String
+  filename  String
+  mimeType  String?      @map("mime_type")
+  sizeBytes BigInt       @default(0) @map("size_bytes") @db.BigInt
+  type      UploadType   @default(VIDEO)
+  status    UploadStatus @default(PENDING)
+  metadata  Json         @default("{}")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session   Session?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  hand      Hand?        @relation(fields: [handId], references: [id], onDelete: SetNull)
+
+  @@unique([bucket, path])
+  @@index([sessionId])
+  @@index([status])
+  @@map("uploads")
+}
+
+// ---------- NOTES ----------
+
+model Note {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String?  @map("session_id") @db.Uuid
+  handId    String?  @map("hand_id") @db.Uuid
+  content   String
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session   Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hand      Hand?    @relation(fields: [handId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([handId])
+  @@map("notes")
+}
+
+// ---------- TAGS (many-to-many polymorphic) ----------
+
+model TagLink {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tagId     String      @map("tag_id") @db.Uuid
+  sessionId String?     @map("session_id") @db.Uuid
+  handId    String?     @map("hand_id") @db.Uuid
+  tableId   String?     @map("table_id") @db.Uuid
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tag       Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  session   Session?    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hand      Hand?       @relation(fields: [handId], references: [id], onDelete: Cascade)
+  table     PokerTable? @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, sessionId, handId, tableId])
+  @@index([sessionId])
+  @@index([handId])
+  @@index([tableId])
+  @@map("_tag_links")
+}
+
+// ---------- SETTINGS ----------
+
+model AppSetting {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique
+  value       Json     @default("{}")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("settings")
+}
