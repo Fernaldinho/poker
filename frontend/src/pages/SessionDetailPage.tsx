@@ -12,6 +12,7 @@ import {
 import { storageService, UploadProgress } from '@/services/storage';
 import { api } from '@/services/api';
 import { formatMoney, formatDate, formatDuration } from '@/utils/format';
+import { LiveCapturePanel } from '@/components/LiveCapturePanel';
 import type { SessionTable } from '@poker/shared';
 
 /** Card de mesa com upload de vídeo e renomeação inline. */
@@ -278,6 +279,12 @@ export default function SessionDetailPage() {
           <p className="mt-1 font-semibold text-white">{session.handsPlayed}</p>
         </div>
       </div>
+
+      <LiveCapturePanel
+        sessionId={id}
+        tables={tables ?? []}
+        stakes={session.stakes}
+      />
 
       <div className="flex items-center justify-between">
         <div>

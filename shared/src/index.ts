@@ -133,6 +133,23 @@ export interface AppSetting {
 
 export type TableStatus = 'EMPTY' | 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
 
+export interface PokerTableReading {
+  street: 'PREFLOP' | 'FLOP' | 'TURN' | 'RIVER' | 'UNKNOWN';
+  pot?: string;
+  heroCards?: string[];
+  communityCards?: string[];
+  opponents?: number;
+  position?: string;
+}
+
+export interface PokerSuggestion {
+  action: 'FOLD' | 'CALL' | 'RAISE';
+  amount?: string;
+  confidence: number;
+  reason: string;
+  table: PokerTableReading;
+}
+
 export interface SessionTable {
   id: string;
   sessionId: string;

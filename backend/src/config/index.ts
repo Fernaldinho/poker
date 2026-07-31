@@ -25,4 +25,11 @@ export const config = {
     imports: process.env.STORAGE_BUCKET_IMPORTS ?? 'imports',
     maxUploadSizeMb: Number(process.env.MAX_UPLOAD_SIZE_MB ?? 2048),
   },
+
+  ai: {
+    geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+    zenApiKey: process.env.ZEN_API_KEY ?? '',
+    model: process.env.AI_MODEL ?? 'gemini-3-flash',
+    maxImageSizeMb: Number(process.env.AI_MAX_IMAGE_MB ?? 4),
+  },
 } as const;
