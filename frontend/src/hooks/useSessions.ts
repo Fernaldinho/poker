@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstac
 import { api } from '@/services/api';
 import { realtimeService, RealtimeTable } from '@/services/realtime';
 import { useEffect } from 'react';
-import type { Session } from '@poker/shared';
+import type { PaginatedResult, Session } from '@poker/shared';
 
 const SESSION_KEYS = {
   all: ['sessions'] as const,
@@ -17,7 +17,7 @@ export function useSessions(params: Record<string, unknown> = {}) {
       const qs = new URLSearchParams(
         Object.entries(params).map(([k, v]) => [k, String(v)])
       ).toString();
-      return api.get(`/sessions${qs ? `?${qs}` : ''}`);
+      return api.get<PaginatedResult<Session>>(`/sessions${qs ? `?${qs}` : ''}`);
     },
     placeholderData: (prev) => prev,
   });
