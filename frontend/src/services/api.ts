@@ -1,13 +1,18 @@
 import type { ApiResponse, PaginatedResult, Session } from '@poker/shared';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333';
+const API_PREFIX = '/api';
 
 /** Cliente HTTP tipado para a API backend. */
 class ApiClient {
   private baseUrl = API_URL;
 
+  private url(path: string): string {
+    return `${this.baseUrl}${path.startsWith('/api') ? path : `${API_PREFIX}${path}`}`;
+  }
+
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetch(this.url(path), {
       headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
       ...options,
     });

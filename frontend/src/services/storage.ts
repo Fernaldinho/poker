@@ -50,7 +50,6 @@ export const storageService = {
     const res = await fetch(
       `${import.meta.env.VITE_API_URL ?? 'http://localhost:3333'}/api/storage/upload`,
       { method: 'POST', body: formData }
-    );
-    return (await res.json()) as ApiResponse<UploadResult>;
+    );    return (await res.json()) as ApiResponse<UploadResult>;
   },
 };
